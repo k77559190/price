@@ -5,86 +5,1012 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<title>零件報價查詢</title>
+<title>INJORA SCX30 改裝品報價查詢</title>
 <style>
 :root{--bg:#eef1f4;--panel:#fff;--ink:#14213d;--mute:#5d6b82;--line:#d5dbe4;--accent:#1f5eff;--price:#0b7a4b;--danger:#c0392b}
 @media (prefers-color-scheme:dark){:root{--bg:#0f1624;--panel:#18213a;--ink:#e8edf7;--mute:#97a4bd;--line:#2c3856;--accent:#6b97ff;--price:#4fd69a;--danger:#ff7b6b}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;line-height:1.5}
-main{max-width:820px;margin:0 auto;padding:28px 16px 48px}
-h1{font-size:clamp(26px,5vw,38px);font-weight:900;letter-spacing:.02em;margin:0 0 4px}
+main{max-width:900px;margin:0 auto;padding:28px 16px 48px}
+h1{font-size:clamp(24px,5vw,36px);font-weight:900;letter-spacing:.02em;margin:0 0 4px}
 .sub{color:var(--mute);margin:0 0 24px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.row{display:grid;grid-template-columns:88px 1fr 140px;gap:12px;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line)}
+.row{display:grid;grid-template-columns:140px 1fr 130px;gap:12px;align-items:start;padding:16px 18px;border-bottom:1px solid var(--line)}
 .row:last-child{border-bottom:0}
-.cat{font-weight:700;font-size:17px}
+.cat{font-weight:700;font-size:17px;padding-top:9px}
 select{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-height:44px}
 select:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.price{text-align:right;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--price)}
+.detail{margin:8px 2px 0;color:var(--mute);font-size:13px;white-space:pre-line;word-break:break-word}
+.price{text-align:right;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--price);padding-top:6px}
 .price.empty{color:var(--mute);font-weight:400;font-size:18px}
 .total{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px;padding:18px;background:var(--ink);color:var(--bg);border-radius:10px}
 .sum{font-size:clamp(28px,7vw,40px);font-weight:900;font-variant-numeric:tabular-nums}
 button{font:inherit;font-weight:500;min-height:44px;padding:0 18px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--bg);cursor:pointer}
-.note{color:var(--mute);font-size:13px;margin-top:14px}
+.note{color:var(--mute);font-size:13px;margin:14px 0 0}
 .err{color:var(--danger);padding:16px 18px}
 .foot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
-.foot .note{margin:0}
 .ver{color:var(--mute);font-size:13px;font-variant-numeric:tabular-nums}
 .foot button{color:var(--ink);background:var(--panel);min-height:36px;padding:0 14px;font-size:14px}
-@media (max-width:560px){.row{grid-template-columns:1fr auto;grid-template-areas:"c p" "s s"}.cat{grid-area:c}.price{grid-area:p}.row select{grid-area:s}}
+@media (max-width:620px){.row{grid-template-columns:1fr auto;grid-template-areas:"c p" "s s"}.cat{grid-area:c;padding-top:0}.price{grid-area:p;padding-top:0}.pick{grid-area:s}}
 </style>
 </head>
 <body>
 <main>
-  <h1>零件報價查詢</h1>
-  <p class="sub">選擇各分類的品項，右側會顯示對應金額。</p>
+  <h1>INJORA SCX30 改裝品報價</h1>
+  <p class="sub">選擇各分類的品項，右側會顯示對應金額（新台幣）。</p>
   <div class="card" id="list"><div class="row">載入中…</div></div>
   <div class="total">
     <div><div>已選品項合計</div><div class="sum" id="sum">NT$ 0</div></div>
     <button id="reset" type="button">全部清除</button>
   </div>
+  <p class="note" id="footnote"></p>
   <p class="note">價格僅供參考，實際金額以現場報價為準。</p>
   <div class="foot">
     <span class="ver" id="ver">版本載入中…</span>
     <button id="force" type="button">強制重新整理</button>
   </div>
 </main>
-<!--
-  ===== 價格資料區：要改價格、新增分類或品項，只改這一段 =====
-  version / updated：每次改價格時請一起更新，頁面底部會顯示
-  categories：每個分類有 name（分類名稱）和 items（品項清單）
-  items 裡的 label 是品牌型號，price 是金額（只填數字）
-  注意：逗號和雙引號要保留，少一個頁面就會出錯
-  以下品牌和價格為範例，請換成實際資料
--->
+
+<!-- 價格資料區：要改價格或品項，只改這一段（逗號和雙引號要保留）；改完請一併更新 version 和 updated -->
 <script type="application/json" id="data">
 {
-  "version": "1.0",
-  "updated": "2026-11-20",
-  "categories": [
-    { "name": "車架", "items": [
-      { "label": "Giant TCR Advanced", "price": 68000 },
-      { "label": "Trek Madone SL", "price": 92000 },
-      { "label": "Specialized Tarmac SL8", "price": 105000 },
-      { "label": "Merida Scultura", "price": 58000 }
-    ] },
-    { "name": "避震", "items": [
-      { "label": "RockShox SID SL", "price": 24500 },
-      { "label": "Fox 32 Step-Cast", "price": 27800 },
-      { "label": "Manitou Markhor", "price": 19800 }
-    ] },
-    { "name": "輪胎", "items": [
-      { "label": "Continental GP5000", "price": 1850 },
-      { "label": "Schwalbe Pro One", "price": 1650 },
-      { "label": "Maxxis Rekon Race", "price": 1450 },
-      { "label": "Vittoria Corsa Pro", "price": 1900 }
-    ] },
-    { "name": "輪框", "items": [
-      { "label": "Zipp 303 Firecrest", "price": 42000 },
-      { "label": "DT Swiss ARC 1100", "price": 38000 },
-      { "label": "Mavic Cosmic SL", "price": 31000 }
-    ] }
-  ]
+ "version": "1.1",
+ "updated": "2026-11-20",
+ "footnote": "V1 115.12.1 後適用，作者保有最終報價之權利",
+ "categories": [
+  {
+   "name": "車殼與外觀件",
+   "items": [
+    {
+     "label": "INJORA IR80-30 Pickup Hard Body for 1/30 SCX30 Bronco JLU K10 (Unpainted 素色未塗裝)",
+     "sku": "IR80-30WH",
+     "color": "White (Unpainted 白色未塗裝)",
+     "usd": "$32.99 USD",
+     "price": 2000,
+     "note": "未塗裝素色版本，官網售價較塗裝版低 $2"
+    },
+    {
+     "label": "INJORA IR80-30 Pickup Hard Body for 1/30 SCX30 Bronco JLU K10 (Painted 塗裝版)",
+     "sku": "IR80-30GN / IR80-30PU / IR80-30GY",
+     "color": "Green / Purple / Grey (綠 / 紫 / 灰塗裝)",
+     "usd": "$34.99 USD",
+     "price": 1040,
+     "note": "原廠金屬漆塗裝版本（預設綠色為 IR80-30GN）"
+    },
+    {
+     "label": "INJORA BUG30 Body with Magnetic Mount for 1/30 SCX30 Bronco JLU K10 (Clear 透明未塗裝)",
+     "sku": "BUG30-CL",
+     "color": "Clear (透明車殼)",
+     "usd": "$24.99 USD",
+     "price": 750,
+     "note": "透明 PC 車殼版本（附遮蓋貼紙供自行噴漆）"
+    },
+    {
+     "label": "INJORA BUG30 Body with Magnetic Mount for 1/30 SCX30 Bronco JLU K10 (Pre-Painted 預塗裝版)",
+     "sku": "BUG30-BK / PU / RD / BL / GN",
+     "color": "Black / Purple / Burgundy / Blue / Green (黑 / 紫 / 酒紅 / 藍 / 綠)",
+     "usd": "$26.99 USD",
+     "price": 810,
+     "note": "原廠預塗裝版本（預設黑色為 BUG30-BK）"
+    },
+    {
+     "label": "INJORA Aluminum Front Rear Bumper for 1/30 SCX30 Bronco (Front 或 Rear 單買前保桿/後保桿)",
+     "sku": "SCX30-15F / SCX30-15R",
+     "color": "Black / Red Tow Hook (黑色配紅拖車鉤)",
+     "usd": "$13.99 USD",
+     "price": 420,
+     "note": "單買 Bronco 鋁合金前保險桿或後保險桿"
+    },
+    {
+     "label": "INJORA Aluminum Front Rear Bumper for 1/30 SCX30 Bronco (Front and Rear 前後套組)",
+     "sku": "SCX30-15FR",
+     "color": "Black / Red Tow Hook (黑色配紅拖車鉤)",
+     "usd": "$24.99 USD",
+     "price": 750,
+     "note": "Bronco 鋁合金前後保險桿完整套組"
+    },
+    {
+     "label": "INJORA Aluminum Front Rear Bumper for 1/30 SCX30 JLU (Front 或 Rear 單買前保桿/後保桿)",
+     "sku": "SCX30-17F / SCX30-16R",
+     "color": "Black (黑色)",
+     "usd": "$13.99 USD",
+     "price": 420,
+     "note": "單買 JLU 鋁合金前保險桿或後保險桿"
+    },
+    {
+     "label": "INJORA Aluminum Front Rear Bumper for 1/30 SCX30 JLU (Front and Rear 前後套組)",
+     "sku": "SCX30-1716FR",
+     "color": "Black (黑色)",
+     "usd": "$24.99 USD",
+     "price": 750,
+     "note": "JLU 鋁合金前後保險桿完整套組"
+    },
+    {
+     "label": "INJORA Aluminum Stinger-style Bumper for 1/30 SCX30 JLU (Front 或 Rear 單買前保桿/後保桿)",
+     "sku": "SCX30-20F / SCX30-16R",
+     "color": "Black (黑色)",
+     "usd": "$13.99 USD",
+     "price": 420,
+     "note": "單買 JLU Stinger 造型前保險桿或後保險桿"
+    },
+    {
+     "label": "INJORA Aluminum Stinger-style Bumper for 1/30 SCX30 JLU (Front and Rear 前後套組)",
+     "sku": "SCX30-2016FR",
+     "color": "Black (黑色)",
+     "usd": "$24.99 USD",
+     "price": 750,
+     "note": "JLU Stinger 造型前後保險桿完整套組"
+    },
+    {
+     "label": "INJORA Aluminum Front Rear Bumper for 1/30 SCX30 Chevrolet K10 (Front 或 Rear 單買前保桿/後保桿)",
+     "sku": "SCX30-21F / SCX30-21R",
+     "color": "Chrome (電鍍銀)",
+     "usd": "$13.99 USD",
+     "price": 420,
+     "note": "單買 Chevrolet K10 電鍍銀鋁合金前保險桿或後保險桿"
+    },
+    {
+     "label": "INJORA Aluminum Front Rear Bumper for 1/30 SCX30 Chevrolet K10 (Front and Rear 前後套組)",
+     "sku": "SCX30-21FR",
+     "color": "Chrome (電鍍銀)",
+     "usd": "$24.99 USD",
+     "price": 750,
+     "note": "Chevrolet K10 電鍍銀鋁合金前後保險桿完整套組"
+    },
+    {
+     "label": "INJORA Nylon Rock Sliders for 1/30 SCX30",
+     "sku": "SCX30-19 (尼龍側踏板)",
+     "color": "Black (黑色)",
+     "usd": "$4.99 USD",
+     "price": 150,
+     "note": ""
+    }
+   ]
+  },
+  {
+   "name": "車架與底盤結構",
+   "items": [
+    {
+     "label": "INJORA Brass LCG Chassis Kit for 1/30 SCX30 Bronco JLU K10 Tacoma",
+     "sku": "SCX30-40 / SCX30-40-19 (黃銅 LCG 低重心車架套件)",
+     "color": "Brass (黃銅原色)",
+     "usd": "$28.99 USD",
+     "price": 870,
+     "note": ""
+    },
+    {
+     "label": "INJORA Aluminum LCG Chassis Kit for 1/30 SCX30 Bronco JLU K10 Tacoma (Chassis Kit Only 僅車架)",
+     "sku": "SCX30-18",
+     "color": "Black (黑色)",
+     "usd": "$22.99 USD",
+     "price": 690,
+     "note": "單買鋁合金 LCG 低重心車架套件（不含尼龍側踏板）"
+    },
+    {
+     "label": "INJORA Aluminum LCG Chassis Kit for 1/30 SCX30 Bronco JLU K10 Tacoma (with Nylon Rock Sliders 含側踏板套組)",
+     "sku": "SCX30-18-19",
+     "color": "Black (黑色)",
+     "usd": "$24.99 USD",
+     "price": 750,
+     "note": "鋁合金 LCG 車架 + 尼龍側踏板 (SCX30-19) 套組"
+    },
+    {
+     "label": "INJORA Brass Skid Plate for 1/30 SCX30 (17.9g) (Brass 黃銅原色)",
+     "sku": "SCX30-06BR",
+     "color": "Brass (黃銅原色)",
+     "usd": "$16.99 USD",
+     "price": 510,
+     "note": "原色黃銅波箱底板（無黑色塗層）"
+    },
+    {
+     "label": "INJORA Brass Skid Plate for 1/30 SCX30 (17.9g) (Black Brass 黑黃銅塗層)",
+     "sku": "SCX30-06BB",
+     "color": "Black Brass (黑黃銅)",
+     "usd": "$17.99 USD",
+     "price": 540,
+     "note": "黑色抗氧化塗層黃銅波箱底板"
+    },
+    {
+     "label": "INJORA Aluminum Skid Plate for 1/30 SCX30 (5.6g)",
+     "sku": "SCX30-06BK (5.6g 鋁合金波箱底板)",
+     "color": "Black (黑色)",
+     "usd": "$15.99 USD",
+     "price": 480,
+     "note": ""
+    }
+   ]
+  },
+  {
+   "name": "底盤連桿與避震懸吊",
+   "items": [
+    {
+     "label": "INJORA Black Brass High Clearance Chassis Links for 1/30 SCX30 CJ-7",
+     "sku": "SCX30-44BB (CJ-7 專用黑黃銅高通過性底盤連桿)",
+     "color": "Black (黑色)",
+     "usd": "$17.99 USD",
+     "price": 540,
+     "note": ""
+    },
+    {
+     "label": "INJORA Stainless Steel High Clearance Links Set for 1/30 SCX30 CJ-7 (Chassis Links Only 僅底盤連桿)",
+     "sku": "SCX30-43",
+     "color": "Silver (金屬原色)",
+     "usd": "$14.99 USD",
+     "price": 450,
+     "note": "單買 CJ-7 專用不鏽鋼底盤連桿（不含轉向連桿）；官網同頁轉向連桿單買為 $8.99 USD (SCX30-29)"
+    },
+    {
+     "label": "INJORA Stainless Steel High Clearance Links Set for 1/30 SCX30 CJ-7 (Full Set 含轉向連桿套組)",
+     "sku": "SCX30-43-29",
+     "color": "Silver (金屬原色)",
+     "usd": "$19.99 USD",
+     "price": 600,
+     "note": "CJ-7 專用不鏽鋼底盤連桿 + 轉向連桿完整套組"
+    },
+    {
+     "label": "INJORA Black Brass High Clearance Chassis Links for 1/30 SCX30 Tacoma",
+     "sku": "SCX30-41BB (Tacoma 專用黑黃銅高通過性底盤連桿)",
+     "color": "Black (黑色)",
+     "usd": "$17.99 USD",
+     "price": 540,
+     "note": ""
+    },
+    {
+     "label": "INJORA Stainless Steel High Clearance Links Set for 1/30 SCX30 Tacoma (Chassis Links Only 僅底盤連桿)",
+     "sku": "SCX30-39",
+     "color": "Silver (金屬原色)",
+     "usd": "$14.99 USD",
+     "price": 450,
+     "note": "單買 Tacoma 專用不鏽鋼底盤連桿（不含轉向連桿）；官網同頁轉向連桿單買為 $8.99 USD (SCX30-29)"
+    },
+    {
+     "label": "INJORA Stainless Steel High Clearance Links Set for 1/30 SCX30 Tacoma (Full Set 含轉向連桿套組)",
+     "sku": "SCX30-39-29",
+     "color": "Silver (金屬原色)",
+     "usd": "$19.99 USD",
+     "price": 600,
+     "note": "Tacoma 專用不鏽鋼底盤連桿 + 轉向連桿完整套組"
+    },
+    {
+     "label": "INJORA Black Brass High Clearance Chassis Links for 1/30 SCX30 Bronco JLU K10",
+     "sku": "SCX30-02BB",
+     "color": "Black (黑色)",
+     "usd": "$17.99 USD",
+     "price": 540,
+     "note": ""
+    },
+    {
+     "label": "INJORA Aluminum High Clearance Chassis Links for 1/30 SCX30 Bronco JLU K10",
+     "sku": "SCX30-02BK",
+     "color": "Black (黑色)",
+     "usd": "$15.99 USD",
+     "price": 480,
+     "note": ""
+    },
+    {
+     "label": "INJORA Stainless Steel High Clearance Links Set for 1/30 SCX30 Bronco JLU K10 (Chassis Links Only 僅底盤連桿)",
+     "sku": "SCX30-28",
+     "color": "Silver (金屬原色)",
+     "usd": "$14.99 USD",
+     "price": 450,
+     "note": "單買 Bronco/JLU/K10 專用不鏽鋼底盤連桿（不含轉向連桿）；官網同頁轉向連桿單買為 $8.99 USD (SCX30-29)"
+    },
+    {
+     "label": "INJORA Stainless Steel High Clearance Links Set for 1/30 SCX30 Bronco JLU K10 (Full Set 含轉向連桿套組)",
+     "sku": "SCX30-28-29",
+     "color": "Silver (金屬原色)",
+     "usd": "$19.99 USD",
+     "price": 600,
+     "note": "Bronco/JLU/K10 專用不鏽鋼底盤連桿 + 轉向連桿完整套組"
+    },
+    {
+     "label": "INJORA Stainless Steel High Clearance Chassis Links Set for SCX30 Bronco JLU K10, +3mm/+5mm Rear Extension",
+     "sku": "SCX30-36",
+     "color": "Silver (金屬原色)",
+     "usd": "$14.99 USD",
+     "price": 450,
+     "note": ""
+    },
+    {
+     "label": "INJORA Stainless Steel Steering Links for 1/30 Axial SCX30",
+     "sku": "SCX30-29",
+     "color": "Silver (金屬原色)",
+     "usd": "$8.99 USD",
+     "price": 270,
+     "note": ""
+    },
+    {
+     "label": "INJORA Black Brass Steering Links for 1/30 Axial SCX30",
+     "sku": "SCX30-05BK",
+     "color": "Black (黑色)",
+     "usd": "$10.99 USD",
+     "price": 330,
+     "note": ""
+    },
+    {
+     "label": "INJORA Rod End Replacement Kit for INJORA SCX30 Chassis Links (Nylon Ball Ends 16PCS 僅尼龍球頭)",
+     "sku": "SCX30-35 (Nylon Ball Ends)",
+     "color": "Black (黑色)",
+     "usd": "$2.99 USD",
+     "price": 90,
+     "note": "僅含 16 顆尼龍連桿球頭（不含金屬球珠與螺絲）"
+    },
+    {
+     "label": "INJORA Rod End Replacement Kit for INJORA SCX30 Chassis Links (Link Ball End Screw Set 含五金螺絲包)",
+     "sku": "SCX30-35 (Screw Set)",
+     "color": "Black (黑色)",
+     "usd": "$6.99 USD",
+     "price": 210,
+     "note": "尼龍球頭 + 銅球珠、球頭螺絲與墊片完整替換包"
+    },
+    {
+     "label": "INJORA 100Pcs Rubber O-rings for INJORA SCX30 Links",
+     "sku": "SCX30-30 (SCX30 連桿用橡膠 O 型環 100入)",
+     "color": "Black (黑色)",
+     "usd": "$1.99 USD",
+     "price": 60,
+     "note": ""
+    },
+    {
+     "label": "INJORA 26mm Aluminum Oil Shocks for 1/30 Axial SCX30",
+     "sku": "SCX30-08BS (26mm 鋁合金油壓避震器)",
+     "color": "Black / Titanium (黑色 / 鈦色)",
+     "usd": "$17.99 USD",
+     "price": 540,
+     "note": ""
+    },
+    {
+     "label": "INJORA 23mm Aluminum Oil Shocks for 1/30 Axial SCX30",
+     "sku": "SCX30-07BS (23mm/22.5mm 鋁合金油壓避震器)",
+     "color": "Black (黑色)",
+     "usd": "$17.99 USD",
+     "price": 540,
+     "note": ""
+    }
+   ]
+  },
+  {
+   "name": "車橋與傳動系統",
+   "items": [
+    {
+     "label": "INJORA Stainless Steel Drive Shafts for 1/30 SCX30 CJ-7",
+     "sku": "SCX30-42 (CJ-7 專用不鏽鋼傳動軸)",
+     "color": "Silver (金屬原色)",
+     "usd": "$14.99 USD",
+     "price": 450,
+     "note": ""
+    },
+    {
+     "label": "INJORA Stainless Steel Drive Shafts for 1/30 SCX30 Tacoma",
+     "sku": "SCX30-38 (Tacoma 專用不鏽鋼傳動軸)",
+     "color": "Silver (金屬原色)",
+     "usd": "$14.99 USD",
+     "price": 450,
+     "note": ""
+    },
+    {
+     "label": "INJORA Stainless Steel Drive Shafts for 1/30 SCX30 Bronco JLU K10",
+     "sku": "SCX30-01 (Bronco/JLU/K10 不鏽鋼傳動軸)",
+     "color": "Silver (金屬原色)",
+     "usd": "$14.99 USD",
+     "price": 450,
+     "note": ""
+    },
+    {
+     "label": "INJORA Complete Transmission with Brass Skid Plate for 1/30 SCX30",
+     "sku": "SCX30-31 (完整波箱總成含黃銅底板)",
+     "color": "Black / Brass (黑/黃銅色)",
+     "usd": "$29.99 USD",
+     "price": 900,
+     "note": ""
+    },
+    {
+     "label": "INJORA Aluminum Transmission Kit for 1/30 SCX30 (Unassembled)",
+     "sku": "SCX30-11BK (鋁合金波箱外殼套件-散裝)",
+     "color": "Black (黑色)",
+     "usd": "$20.99 USD",
+     "price": 630,
+     "note": ""
+    },
+    {
+     "label": "INJORA Axle Transmission Bearing Set for 1/30 SCX30 (Transmission Bearing Set 6pcs 波箱培林組)",
+     "sku": "SCX30-22 (Transmission 6pcs)",
+     "color": "Silver (金屬原色)",
+     "usd": "$4.99 USD",
+     "price": 150,
+     "note": "波箱專用不鏽鋼培林組（6顆入）"
+    },
+    {
+     "label": "INJORA Axle Transmission Bearing Set for 1/30 SCX30 (Axle Bearing Set 14pcs 車橋培林組)",
+     "sku": "SCX30-22 (Axle 14pcs)",
+     "color": "Silver (金屬原色)",
+     "usd": "$9.99 USD",
+     "price": 300,
+     "note": "前後車橋專用不鏽鋼培林組（14顆入）"
+    },
+    {
+     "label": "INJORA +4.5mm Planet Axles with Double Joint Shafts for 1/30 SCX30 (Front Only 僅前橋)",
+     "sku": "SCX30-34BKF",
+     "color": "Black (黑色)",
+     "usd": "$41.99 USD",
+     "price": 1240,
+     "note": "單買 +4.5mm 行星齒輪加寬前車橋（含雙十字萬向節傳動軸與黃銅轉向杯）"
+    },
+    {
+     "label": "INJORA +4.5mm Planet Axles with Double Joint Shafts for 1/30 SCX30 (Front & Rear 前後橋套組)",
+     "sku": "SCX30-34BKFR",
+     "color": "Black (黑色)",
+     "usd": "$59.99 USD",
+     "price": 1770,
+     "note": ""
+    },
+    {
+     "label": "INJORA +3mm Planet Axles with Brass Steering Knuckles for 1/30 SCX30 (Front Only 僅前橋)",
+     "sku": "SCX30-25BKF",
+     "color": "Black (黑色)",
+     "usd": "$36.99 USD",
+     "price": 1100,
+     "note": "單買 +3mm 行星齒輪加寬前車橋（含黃銅轉向杯）"
+    },
+    {
+     "label": "INJORA +3mm Planet Axles with Brass Steering Knuckles for 1/30 SCX30 (Front & Rear 前後橋套組)",
+     "sku": "SCX30-25BKFR",
+     "color": "Black (黑色)",
+     "usd": "$52.99 USD",
+     "price": 1570,
+     "note": ""
+    },
+    {
+     "label": "INJORA Stock Width Axles with Brass Steering Knuckles for 1/30 SCX30",
+     "sku": "SCX30-32BKFR (原廠寬度金屬車橋含黃銅轉向杯)",
+     "color": "Black / Brass (黑/黃銅色)",
+     "usd": "$49.99 USD",
+     "price": 1480,
+     "note": ""
+    },
+    {
+     "label": "INJORA Aluminum Front & Rear Axle Housings for 1/30 SCX30",
+     "sku": "SCX30-10BK",
+     "color": "Black (黑色)",
+     "usd": "$24.99 USD",
+     "price": 750,
+     "note": ""
+    },
+    {
+     "label": "INJORA Stainless Steel Axle Shafts for 1/30 SCX30 (Front 或 Rear 單軸)",
+     "sku": "SCX30-13F / SCX30-13R",
+     "color": "Silver (金屬原色)",
+     "usd": "$5.99 USD – $7.99 USD (單軸規格)",
+     "price": 180,
+     "note": "單買前軸 (SCX30-13F 十字萬向節) 或後軸 (SCX30-13R 直軸)，依前後軸規格定價不同（後軸 $5.99 / 前軸 $7.99）"
+    },
+    {
+     "label": "INJORA Stainless Steel Axle Shafts for 1/30 SCX30 (Front & Rear 前後軸套組)",
+     "sku": "SCX30-13FR",
+     "color": "Silver (金屬原色)",
+     "usd": "$12.99 USD",
+     "price": 390,
+     "note": "前後軸完整套組"
+    },
+    {
+     "label": "INJORA Black Brass Steering Knuckles for 1/30 Axial SCX30",
+     "sku": "SCX30-04BK (黑黃銅轉向杯)",
+     "color": "Black (黑色)",
+     "usd": "$13.99 USD",
+     "price": 420,
+     "note": ""
+    },
+    {
+     "label": "INJORA Aluminum Servo Saver for 1/30 SCX30",
+     "sku": "SCX30-09BK (鋁合金舵機保護臂)",
+     "color": "Black (黑色)",
+     "usd": "$4.99 USD",
+     "price": 150,
+     "note": ""
+    },
+    {
+     "label": "INJORA Black Brass Diff Covers for 1/30 SCX30 Stock Axles",
+     "sku": "SCX30-26BB (原廠車橋用黑黃銅差速器蓋)",
+     "color": "Black (黑色)",
+     "usd": "$13.99 USD",
+     "price": 420,
+     "note": ""
+    },
+    {
+     "label": "INJORA 2pcs Aluminum Diff Covers for SCX30-25BKFR",
+     "sku": "SCX30-27",
+     "color": "Black (黑色)",
+     "usd": "$9.99 USD",
+     "price": 300,
+     "note": ""
+    },
+    {
+     "label": "INJORA Axle Worm Gear Set for 1/30 SCX30 (Single Set 單組 2/13T 或 2/16T)",
+     "sku": "SCX30-14-13T / SCX30-14-16T",
+     "color": "Steel (金屬原色)",
+     "usd": "$8.99 USD",
+     "price": 270,
+     "note": "單車橋份量（1組蝸桿+蝸輪，可選 2/13T 加速 23% 或 2/16T 原廠齒比）"
+    },
+    {
+     "label": "INJORA Axle Worm Gear Set for 1/30 SCX30 (2 Sets 雙組套裝 12T/13T/16T)",
+     "sku": "SCX30-14 (2 Sets 組合)",
+     "color": "Steel (金屬原色)",
+     "usd": "$16.99 USD",
+     "price": 510,
+     "note": "前後雙橋份量組合（含 2 Sets 12T / 13T / 16T 或 12T+13T / 13T+16T 搭配組合）"
+    },
+    {
+     "label": "INJORA M2 Stainless Steel Nuts for 1/30 SCX30",
+     "sku": "SCX30-12 (M2 3.0 不鏽鋼輪圈螺帽)",
+     "color": "Silver / Black (銀色 / 黑色)",
+     "usd": "$4.99 USD",
+     "price": 150,
+     "note": ""
+    }
+   ]
+  },
+  {
+   "name": "電裝與動力系統",
+   "items": [
+    {
+     "label": "INJORA High Torque N30 PRO NANO Servo with Servo Saver for 1/30 SCX30 (JR/ZH1.5)",
+     "sku": "N30 PRO",
+     "color": "Black (黑色)",
+     "usd": "$38.99 USD",
+     "price": 1160,
+     "note": ""
+    },
+    {
+     "label": "INJORA High Torque Brass N30 PRO NANO Servo with Servo Saver for 1/30 SCX30 (JR/ZH1.5)",
+     "sku": "Brass N30 PRO",
+     "color": "Brass / Black (黃銅/黑)",
+     "usd": "$39.99 USD",
+     "price": 1180,
+     "note": ""
+    },
+    {
+     "label": "INJORA Aluminum N30 NANO Servo with Servo Saver for 1/30 SCX30",
+     "sku": "N30",
+     "color": "Black (黑色)",
+     "usd": "$33.99 USD",
+     "price": 1010,
+     "note": ""
+    },
+    {
+     "label": "INJORA MBL32-NANO Brushless ESC & 1616 Green Viper Motor 4800KV for 1/30 SCX30",
+     "sku": "MBL32-NANO + 1616 (4800KV)",
+     "color": "Black / Green (黑/綠)",
+     "usd": "$61.99 USD",
+     "price": 1830,
+     "note": ""
+    },
+    {
+     "label": "INJORA MBL32-NANO Brushless ESC & 1621 Green Viper Motor 4300KV for 1/30 SCX30",
+     "sku": "MBL32-NANO + 1621 (4300KV)",
+     "color": "Black / Green (黑/綠)",
+     "usd": "$61.99 USD",
+     "price": 1830,
+     "note": ""
+    },
+    {
+     "label": "INJORA MBL32 NANO Brushless ESC for 1/30 Axial SCX30",
+     "sku": "MBL32-NANO",
+     "color": "Black (黑色)",
+     "usd": "$43.99 USD",
+     "price": 1300,
+     "note": ""
+    },
+    {
+     "label": "INJORA Green Viper 1616 Brushless Motor 4800KV for 1/30 SCX30",
+     "sku": "1616 (4800KV)",
+     "color": "Green / Black (綠/黑)",
+     "usd": "$21.99 USD",
+     "price": 660,
+     "note": ""
+    },
+    {
+     "label": "INJORA Green Viper 1621 Brushless Motor 4300KV for 1/30 SCX30",
+     "sku": "1621 (4300KV)",
+     "color": "Green / Black (綠/黑)",
+     "usd": "$21.99 USD",
+     "price": 660,
+     "note": ""
+    },
+    {
+     "label": "INJORA receiver connector wire for MBL32 ESC",
+     "sku": "MBL32-RX (MBL32 接收機連接線)",
+     "color": "Black / Red / White",
+     "usd": "$1.00 USD",
+     "price": 30,
+     "note": ""
+    },
+    {
+     "label": "INJORA MB100 NANO Brushed ESC 15A for 1/24 1/30 1/32 RC Crawlers",
+     "sku": "MB100 NANO",
+     "color": "Black (黑色)",
+     "usd": "$19.99 USD",
+     "price": 600,
+     "note": ""
+    },
+    {
+     "label": "INJORA 65T 030-Size Brushed Motor for 1/30 SCX30",
+     "sku": "030 65T",
+     "color": "Silver / Black (銀/黑)",
+     "usd": "$6.99 USD",
+     "price": 210,
+     "note": ""
+    },
+    {
+     "label": "INJORA 60T 030-Size Brushed Motor for 1/30 SCX30",
+     "sku": "030 60T",
+     "color": "Silver / Black (銀/黑)",
+     "usd": "$6.99 USD",
+     "price": 210,
+     "note": ""
+    },
+    {
+     "label": "INJORA T6M 2.4GHz Transmitter with Micro 4CH Receiver for 1/30 SCX30",
+     "sku": "T6M / T4DCM",
+     "color": "Black (黑色)",
+     "usd": "$37.99 USD",
+     "price": 1130,
+     "note": ""
+    },
+    {
+     "label": "INJORA 4CH 2.4GHz Micro Receiver for 1/32 1/30 1/24 RC Cars",
+     "sku": "T4DCM",
+     "color": "Black (黑色)",
+     "usd": "$12.99 USD",
+     "price": 390,
+     "note": ""
+    },
+    {
+     "label": "INJORA 4LED Rock Lights Kit for 1/30 SCX30",
+     "sku": "SCX30-33 (4LED 底盤攀岩燈組)",
+     "color": "White LED / Black Mount (白光/黑座)",
+     "usd": "$14.99 USD",
+     "price": 450,
+     "note": ""
+    }
+   ]
+  },
+  {
+   "name": "輪胎與海綿內襯",
+   "items": [
+    {
+     "label": "INJORA 0.7\" 34*12mm MAVERIX M/T Tires for 1/30 SCX30 (T7025) (4)",
+     "sku": "T7025",
+     "color": "Black (黑色)",
+     "usd": "$12.99 USD",
+     "price": 390,
+     "note": ""
+    },
+    {
+     "label": "INJORA 0.7\" 35*14mm King Trekker Tires for 1/30 SCX30 (T7014) (4)",
+     "sku": "T7014",
+     "color": "Black (黑色)",
+     "usd": "$12.99 USD",
+     "price": 390,
+     "note": ""
+    },
+    {
+     "label": "INJORA 0.7\" 36*14mm Swamp Claw Tires for 1/30 SCX30 (T7019) (4)",
+     "sku": "T7019",
+     "color": "Black (黑色)",
+     "usd": "$12.99 USD",
+     "price": 390,
+     "note": ""
+    },
+    {
+     "label": "INJORA 0.7\" 37*14mm Cling On Tires for 1/30 SCX30 (T7022) (4)",
+     "sku": "T7022",
+     "color": "Black (黑色)",
+     "usd": "$12.99 USD",
+     "price": 390,
+     "note": ""
+    },
+    {
+     "label": "INJORA 0.7\" 39*15mm HAMROK Tires for 1/30 SCX30 (T7027) (4)",
+     "sku": "T7027",
+     "color": "Black (黑色)",
+     "usd": "$12.99 USD",
+     "price": 390,
+     "note": ""
+    },
+    {
+     "label": "INJORA 0.7\" 40*15mm Crawler Tires for 1/30 SCX30 (T7011) (4)",
+     "sku": "T7011",
+     "color": "Black (黑色)",
+     "usd": "$12.99 USD",
+     "price": 390,
+     "note": ""
+    },
+    {
+     "label": "INJORA 0.7\" 40*14mm XHX Pin Tires for 1/30 SCX30 (T7021) (4)",
+     "sku": "T7021",
+     "color": "Black (黑色)",
+     "usd": "$12.99 USD",
+     "price": 390,
+     "note": ""
+    },
+    {
+     "label": "INJORA 0.7\" 40*15mm King Trekker Tires for 1/30 SCX30 (T7024) (4)",
+     "sku": "T7024",
+     "color": "Black (黑色)",
+     "usd": "$12.99 USD",
+     "price": 390,
+     "note": ""
+    },
+    {
+     "label": "INJORA 0.7\" 41*14mm Cling On Tires for 1/30 SCX30 (T7020) (4)",
+     "sku": "T7020",
+     "color": "Black (黑色)",
+     "usd": "$12.99 USD",
+     "price": 390,
+     "note": ""
+    },
+    {
+     "label": "INJORA 0.7\" 41*14mm MAVERIX M/T Tires for 1/30 SCX30 (T7028) (4)",
+     "sku": "T7028",
+     "color": "Black (黑色)",
+     "usd": "$12.99 USD",
+     "price": 390,
+     "note": ""
+    },
+    {
+     "label": "INJORA 0.7\" 44*16mm XHX Pin Tires for 1/30 1/32 RC Crawlers (T7030) (4)",
+     "sku": "T7030",
+     "color": "Black (黑色)",
+     "usd": "$12.99 USD",
+     "price": 390,
+     "note": ""
+    },
+    {
+     "label": "INJORA 0.7\" 45*16mm Cling On Tires for 1/30 SCX30 (T7031) (4)",
+     "sku": "T7031",
+     "color": "Black (黑色)",
+     "usd": "$12.99 USD",
+     "price": 390,
+     "note": ""
+    },
+    {
+     "label": "INJORA Silicone Rubber Inserts for 0.7\" 36mm Tires",
+     "sku": "TI07-36-14",
+     "color": "Green / Blue / Yellow (依官網規格)",
+     "usd": "$10.99 USD",
+     "price": 330,
+     "note": ""
+    },
+    {
+     "label": "INJORA Silicone Rubber Inserts for 0.7\" 39-41mm Tires",
+     "sku": "TI07-40-14",
+     "color": "Green / Blue / Yellow (依官網規格)",
+     "usd": "$10.99 USD",
+     "price": 330,
+     "note": ""
+    }
+   ]
+  },
+  {
+   "name": "輪框與配重環",
+   "items": [
+    {
+     "label": "INJORA 0.7\" D18 6-Spoke Aluminum Wheels for 1/30 SCX30 (W7001) (4)",
+     "sku": "W7001",
+     "color": "Black / Titanium (黑色 / 鈦色)",
+     "usd": "$19.99 USD",
+     "price": 600,
+     "note": ""
+    },
+    {
+     "label": "INJORA 0.7\" D18 5-Spoke Aluminum Wheels for 1/30 SCX30 (W7002) (4)",
+     "sku": "W7002",
+     "color": "Black / Titanium (黑色 / 鈦色)",
+     "usd": "$19.99 USD",
+     "price": 600,
+     "note": ""
+    },
+    {
+     "label": "INJORA 0.7\" D19 Ripple Aluminum Wheels for 1/30 SCX30 (W7005) (4)",
+     "sku": "W7005",
+     "color": "Gold / Titanium (金色 / 鈦色)",
+     "usd": "$19.99 USD",
+     "price": 600,
+     "note": ""
+    },
+    {
+     "label": "INJORA 0.7\" D19 Ripple Black Solid Brass Wheels for 1/30 SCX30 (W7005)(4)",
+     "sku": "W7005",
+     "color": "Black (黑色)",
+     "usd": "$23.99 USD",
+     "price": 720,
+     "note": ""
+    },
+    {
+     "label": "INJORA 0.7\" D19 ModuWheel for 1/30 SCX30 1/32 Ascent-32 (MW7006) (4)",
+     "sku": "MW7006",
+     "color": "Silver / Black (銀/黑)",
+     "usd": "$22.99 USD",
+     "price": 690,
+     "note": ""
+    },
+    {
+     "label": "INJORA 0.7\" D19 Brass Beadlock Wheels for 1/30 SCX30 (W7007) (4) (Brass 黃銅原色)",
+     "sku": "W7007BR-19",
+     "color": "Brass (黃銅原色)",
+     "usd": "$24.99 USD",
+     "price": 750,
+     "note": "黃銅原色版本（4顆入）"
+    },
+    {
+     "label": "INJORA 0.7\" D19 Brass Beadlock Wheels for 1/30 SCX30 (W7007) (4) (White / Black Brass 白色/黑黃銅塗層)",
+     "sku": "W7007WH-19 / W7007BB-19",
+     "color": "White / Black Brass (白色 / 黑黃銅塗層)",
+     "usd": "$26.99 USD",
+     "price": 810,
+     "note": "表面塗層版本（白色 W7007WH-19 或黑黃銅 W7007BB-19，4顆入）"
+    },
+    {
+     "label": "INJORA 0.7\" D19 Aluminum Wheels for 1/30 SCX30 (W7008) (4)",
+     "sku": "W7008",
+     "color": "Purple / Grey (紫色 / 灰色)",
+     "usd": "$19.99 USD",
+     "price": 600,
+     "note": ""
+    },
+    {
+     "label": "INJORA 0.7\" D19 Aluminum Beadlock Wheels for 1/30 SCX30 (W7009) (4)",
+     "sku": "W7009",
+     "color": "Black / Titanium (黑色 / 鈦色)",
+     "usd": "$19.99 USD",
+     "price": 600,
+     "note": ""
+    },
+    {
+     "label": "INJORA 0.7\" D19 ModuWheel for 1/30 SCX30 1/32 Ascent-32 (MW7012) (4)",
+     "sku": "MW7012",
+     "color": "Black / Blue / Orange (黑 / 藍 / 橘)",
+     "usd": "$22.99 USD",
+     "price": 690,
+     "note": ""
+    },
+    {
+     "label": "INJORA 0.7\" D19 Aluminum Wheels for 1/30 SCX30 (W7013) (4)",
+     "sku": "W7013",
+     "color": "Silver / Black (銀/黑)",
+     "usd": "$19.99 USD",
+     "price": 600,
+     "note": ""
+    },
+    {
+     "label": "INJORA 0.7\" Turbine D19 Deep Dish Brass Wheels for 1/30 SCX30 (W7015) (Brass 黃銅原色)",
+     "sku": "W7015BR-19",
+     "color": "Brass (黃銅原色)",
+     "usd": "$24.99 USD",
+     "price": 750,
+     "note": "黃銅原色版本（4顆入）"
+    },
+    {
+     "label": "INJORA 0.7\" Turbine D19 Deep Dish Brass Wheels for 1/30 SCX30 (W7015) (White Color 白色塗層)",
+     "sku": "W7015WH-19",
+     "color": "White Color Brass (白色塗層黃銅)",
+     "usd": "$27.99 USD",
+     "price": 840,
+     "note": "白色表面塗層版本（4顆入，塗層版較原色貴 $3）"
+    },
+    {
+     "label": "INJORA 0.7\" D19 Brass Beadlock Wheels for 1/30 Axial SCX30 (W7016)",
+     "sku": "W7016",
+     "color": "Chrome-Plated Brass / Black-Plated Brass (電鍍銀 / 電鍍黑)",
+     "usd": "$24.99 USD",
+     "price": 750,
+     "note": ""
+    },
+    {
+     "label": "INJORA 0.6\"/0.7\" Beadlock Wheels & Tires Set for 1/30 SCX30 (W6701)",
+     "sku": "W6701",
+     "color": "Black / Silver (黑框黑胎)",
+     "usd": "$28.99 USD",
+     "price": 870,
+     "note": ""
+    },
+    {
+     "label": "INJORA 4.7g Brass Inner Clamp Rings for INJORA 0.7\" D18 Wheels",
+     "sku": "W7003-18 (0.7\" D18 輪框用 4.7g 黃銅內夾環)",
+     "color": "Brass (黃銅原色)",
+     "usd": "$7.99 USD",
+     "price": 240,
+     "note": ""
+    },
+    {
+     "label": "INJORA 5.6g Brass Inner Clamp Rings for INJORA 0.7\" D19 Wheels",
+     "sku": "W7004-19 (0.7\" D19 輪框用 5.6g 黃銅內夾環)",
+     "color": "Brass (黃銅原色)",
+     "usd": "$7.99 USD",
+     "price": 240,
+     "note": ""
+    },
+    {
+     "label": "INJORA 10g Brass Inner Clamp Rings for INJORA 0.7\" D18 Wheels (2 PCS 2顆裝)",
+     "sku": "W7010-18-2",
+     "color": "Brass (黃銅原色)",
+     "usd": "$5.99 USD",
+     "price": 180,
+     "note": "2 顆裝（僅供前輪配重使用）"
+    },
+    {
+     "label": "INJORA 10g Brass Inner Clamp Rings for INJORA 0.7\" D18 Wheels (4 PCS 4顆裝)",
+     "sku": "W7010-18-4",
+     "color": "Brass (黃銅原色)",
+     "usd": "$9.99 USD",
+     "price": 300,
+     "note": "4 顆裝（四輪全配重使用）"
+    },
+    {
+     "label": "INJORA 10.1g Brass Inner Clamp Rings for INJORA 0.7\" D19 Wheels (2 PCS 2顆裝)",
+     "sku": "W7011-19-2",
+     "color": "Brass (黃銅原色)",
+     "usd": "$5.99 USD",
+     "price": 180,
+     "note": "2 顆裝（僅供前輪配重使用）"
+    },
+    {
+     "label": "INJORA 10.1g Brass Inner Clamp Rings for INJORA 0.7\" D19 Wheels (4 PCS 4顆裝)",
+     "sku": "W7011-19-4",
+     "color": "Brass (黃銅原色)",
+     "usd": "$9.99 USD",
+     "price": 300,
+     "note": "4 顆裝（四輪全配重使用）"
+    }
+   ]
+  },
+  {
+   "name": "工具與耗材五金",
+   "items": [
+    {
+     "label": "INJORA Drivers for 1/30 Axial SCX30 (Single Driver 單支起子/套筒)",
+     "sku": "LSD14 / LSD63 / LSD64 / LSD69",
+     "color": "Black / Silver (黑/銀)",
+     "usd": "$4.99 USD",
+     "price": 150,
+     "note": "單支購買規格（3.0mm套筒 / 2.0mm+十字 / T3星形 / 0.05\"六角，任選單支；另 3.0mm+2.0mm 雙支組為 $8.99 USD）"
+    },
+    {
+     "label": "INJORA Drivers for 1/30 Axial SCX30 (4-Piece Driver Set 4件完整套組)",
+     "sku": "LSD14-63-64-69",
+     "color": "Black / Silver (黑/銀)",
+     "usd": "$19.99 USD",
+     "price": 600,
+     "note": "4 件式專用螺絲起子/套筒完整套組"
+    },
+    {
+     "label": "INJORA Aluminum RC Car Stand with Shock Holder for 1/30 1/32 RC Crawler",
+     "sku": "Tool-70BK (1/30 1/32 鋁合金修車架)",
+     "color": "Black (黑色)",
+     "usd": "$15.99 USD",
+     "price": 480,
+     "note": ""
+    },
+    {
+     "label": "INJORA Grade 12.9 Alloy Steel M1.0 M1.4 M2.0 Screws Set for 1/30 SCX30",
+     "sku": "SCX30-24 (12.9級合金鋼螺絲組)",
+     "color": "Black (黑色)",
+     "usd": "$7.99 USD",
+     "price": 240,
+     "note": ""
+    },
+    {
+     "label": "INJORA 8mm & 10mm Acetate Cloth Tape for RC Wiring",
+     "sku": "Tool-71 (8mm & 10mm 醋酸布膠帶)",
+     "color": "Black (黑色)",
+     "usd": "$6.99 USD",
+     "price": 210,
+     "note": ""
+    }
+   ]
+  }
+ ]
 }
 </script>
 
@@ -92,63 +1018,56 @@ button{font:inherit;font-weight:500;min-height:44px;padding:0 18px;border-radius
 const $ = id => document.getElementById(id);
 const fmt = n => "NT$ " + n.toLocaleString("en-US");
 const el = (t, p = {}, ...k) => { const e = Object.assign(document.createElement(t), p); e.append(...k); return e; };
+const PAGE_VERSION = "v2.0"; // 網頁程式有改動時，請手動調高這個版本號
+const EMBED = JSON.parse($("data").textContent);
 let rows = [];
 
-const EMBED = JSON.parse($("data").textContent);
-// 先用頁面內建的價格顯示，再偷偷重新下載一次網頁（網址加時間參數、不用快取），
-// 如果發現價格資料比較新，就直接更新畫面，避免客人看到舊價格
+// 先用頁面內建的價格顯示，再在背景重新下載網頁（網址加時間參數、不用快取），發現價格較新就更新畫面
 async function loadData() {
   const r = await fetch(location.pathname + "?t=" + Date.now(), { cache: "no-store" });
   if (!r.ok) throw new Error("HTTP " + r.status);
   const doc = new DOMParser().parseFromString(await r.text(), "text/html");
   return JSON.parse(doc.getElementById("data").textContent);
 }
-const PAGE_VERSION = "v1.2"; // 網頁程式有改動時，請手動調高這個版本號
-function showVersion(raw) {
-  const v = Array.isArray(raw) ? "" : (raw.version || "");
-  const u = Array.isArray(raw) ? "" : (raw.updated || "");
-  $("ver").textContent = "網頁 " + PAGE_VERSION + (v ? "　價格 v" + v : "") + (u ? "（更新於 " + u + "）" : "");
-}
 function render(raw) {
-  const data = Array.isArray(raw) ? raw : raw.categories;
-  showVersion(raw);
+  $("ver").textContent = "網頁 " + PAGE_VERSION + "　價格 v" + raw.version + "（更新於 " + raw.updated + "）";
+  $("footnote").textContent = raw.footnote || "";
   const keep = {};
   rows.forEach(({ sel, cat }) => { if (sel.value !== "") keep[cat.name] = cat.items[+sel.value].label; });
   const list = $("list"); list.replaceChildren(); rows = [];
-  data.forEach((cat, ci) => {
+  raw.categories.forEach((cat, ci) => {
     const sel = el("select", { id: "cat" + ci }, el("option", { value: "", textContent: "請選擇品項" }));
     cat.items.forEach((it, i) => sel.append(el("option", { value: i, textContent: it.label })));
     const idx = cat.items.findIndex(it => it.label === keep[cat.name]);
     if (idx >= 0) sel.value = idx;
+    const detail = el("div", { className: "detail" });
     const price = el("div", { className: "price empty", textContent: "—" });
     price.setAttribute("aria-live", "polite");
     sel.addEventListener("change", update);
-    list.append(el("div", { className: "row" }, el("label", { className: "cat", htmlFor: "cat" + ci, textContent: cat.name }), sel, price));
-    rows.push({ sel, price, cat });
+    list.append(el("div", { className: "row" },
+      el("label", { className: "cat", htmlFor: "cat" + ci, textContent: cat.name }),
+      el("div", { className: "pick" }, sel, detail), price));
+    rows.push({ sel, price, detail, cat });
   });
   update();
 }
 function update() {
   let total = 0;
-  rows.forEach(({ sel, price, cat }) => {
-    if (sel.value === "") { price.textContent = "—"; price.className = "price empty"; return; }
-    const p = cat.items[+sel.value].price; total += p;
-    price.textContent = fmt(p); price.className = "price";
+  rows.forEach(({ sel, price, detail, cat }) => {
+    if (sel.value === "") { price.textContent = "—"; price.className = "price empty"; detail.textContent = ""; return; }
+    const it = cat.items[+sel.value]; total += it.price;
+    price.textContent = fmt(it.price); price.className = "price";
+    detail.textContent = [it.sku && "型號：" + it.sku, it.color && "顏色：" + it.color, it.usd && "官網價：" + it.usd, it.note && "備註：" + it.note].filter(Boolean).join("\n");
   });
   $("sum").textContent = fmt(total);
 }
 async function refresh() {
-  try { render(await loadData()); }
-  catch (e) { if (!rows.length) $("list").replaceChildren(el("div", { className: "err", textContent: "價格資料載入失敗，請重新整理頁面。" })); }
+  try { render(await loadData()); } catch (e) { /* 讀取失敗時維持內建價格 */ }
 }
 $("reset").addEventListener("click", () => { rows.forEach(r => r.sel.value = ""); update(); });
-// 客人切回這個分頁時自動更新價格
 document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
 // 強制重新整理：網址加上時間參數，連網頁本身也重新下載
-$("force").addEventListener("click", () => {
-  location.href = location.pathname + "?r=" + Date.now();
-});
-// 重整後把網址上的參數清掉，保持網址乾淨
+$("force").addEventListener("click", () => { location.href = location.pathname + "?r=" + Date.now(); });
 if (location.search.startsWith("?r=")) history.replaceState(null, "", location.pathname);
 render(EMBED);
 refresh();
