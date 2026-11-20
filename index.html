@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
+<html lang="zh-Hant" data-theme="light" style="color-scheme: light;"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>零件報價查詢</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&amp;display=swap">
 <style>
 :root{--bg:#eef1f4;--panel:#fff;--ink:#14213d;--mute:#5d6b82;--line:#d5dbe4;--accent:#1f5eff;--accent-ink:#fff;--price:#0b7a4b;--danger:#c0392b;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -47,7 +46,7 @@ button.small{min-height:36px;padding:0 12px;font-size:14px}
 .row{grid-template-columns:1fr auto;grid-template-areas:"c p" "s s"}.cat{grid-area:c}.price{grid-area:p}.row select{grid-area:s}
 .item{grid-template-columns:1fr 100px auto}}
 </style>
-</head>
+<style>artifact-sync,artifact-local{display:contents}</style></head>
 <body>
 <main>
   <div class="head">
@@ -55,7 +54,7 @@ button.small{min-height:36px;padding:0 12px;font-size:14px}
       <h1>零件報價查詢</h1>
       <p class="sub">選擇各分類的品項，右側會顯示對應金額。</p>
     </div>
-    <button id="manage" type="button" hidden>管理模式</button>
+    <button id="manage" type="button" hidden="">管理模式</button>
   </div>
 
   <section id="view">
@@ -67,10 +66,10 @@ button.small{min-height:36px;padding:0 12px;font-size:14px}
     <p class="note">價格僅供參考，實際金額以現場報價為準。</p>
   </section>
 
-  <section id="admin" hidden></section>
+  <section id="admin" hidden=""></section>
 </main>
 
-<script type="application/json" id="data">[{"name":"車架","items":[{"label":"Giant TCR Advanced","price":68000},{"label":"Trek Madone SL","price":92000},{"label":"Specialized Tarmac SL8","price":105000},{"label":"Merida Scultura","price":58000}]},{"name":"避震","items":[{"label":"RockShox SID SL","price":24500},{"label":"Fox 32 Step-Cast","price":27800},{"label":"Manitou Markhor","price":19800}]},{"name":"輪胎","items":[{"label":"Continental GP5000","price":1850},{"label":"Schwalbe Pro One","price":1650},{"label":"Maxxis Rekon Race","price":1450},{"label":"Vittoria Corsa Pro","price":1900}]},{"name":"輪框","items":[{"label":"Zipp 303 Firecrest","price":42000},{"label":"DT Swiss ARC 1100","price":38000},{"label":"Mavic Cosmic SL","price":31000}]}]</script>
+<script type="application/json" id="data">[{"name":"車架","items":[{"label":"ABCD","price":58000}]},{"name":"避震","items":[{"label":"RockShox SID SL","price":24500},{"label":"Fox 32 Step-Cast","price":27800},{"label":"Manitou Markhor","price":19800}]},{"name":"輪胎","items":[{"label":"Continental GP5000","price":1850},{"label":"Schwalbe Pro One","price":1650},{"label":"Maxxis Rekon Race","price":1450},{"label":"Vittoria Corsa Pro","price":1900}]},{"name":"輪框","items":[{"label":"Zipp 303 Firecrest","price":42000},{"label":"DT Swiss ARC 1100","price":38000},{"label":"Mavic Cosmic SL","price":31000}]}]</script>
 
 <script>
 const $ = id => document.getElementById(id);
@@ -196,5 +195,6 @@ renderView();
   } catch (e) {}
 })();
 </script>
-</body>
-</html>
+
+
+</body></html>
